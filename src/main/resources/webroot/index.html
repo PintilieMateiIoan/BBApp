@@ -1,0 +1,1715 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>BBApp</title>
+    <link rel="stylesheet" href="framework7/css/framework7.bundle.min.css">
+  </head>
+  <body>
+    <!-- App root element -->
+    <div id="app">
+      <!-- Statusbar overlay -->
+      <div class="statusbar"></div>
+      <!-- Your main view, should have "view-main" class -->
+      <div class="view view-main">
+
+      </div>
+    </div>
+
+    <script type="text/javascript" src="framework7/js/framework7.bundle.min.js"></script>
+    <script type="text/javascript">
+        function isEmptyOrSpaces(str) {
+          return str === null || str.match(/^ *$/) !== null;
+        }
+
+        var app = new Framework7({
+          root: '#app',
+          name: 'BBApp',
+          id: 'com.bbapp',
+          lazyModulesPath: 'framework7/components',
+          routes: [
+            {
+              name: 'login',
+              path: '/login/',
+              url: 'login.html'
+            },
+            {
+              name: 'changePass',
+              path: '/changePass/',
+              url: 'changePass.html'
+            },
+            {
+              name: 'setUpProfile',
+              path: '/setUpProfile/',
+              url: 'setUpProfile.html'
+            },
+            {
+              name: 'thankYou',
+              path: '/thankYou/',
+              url: 'thankYou.html'
+            },
+            {
+              name: 'home',
+              path: '/home/',
+              url: 'home.html'
+            },
+            {
+              name: 'bbSquad',
+              path: '/bbSquad/',
+              url: 'bbSquad.html'
+            },
+            {
+              name: 'admin',
+              path: '/admin/',
+              url: 'admin.html'
+            },
+            {
+              name: 'manageUsers',
+              path: '/manageUsers/',
+              url: 'manageUsers.html'
+            },
+            {
+              name: 'manageCampaigns',
+              path: '/manageCampaigns/',
+              url: 'manageCampaigns.html'
+            },
+            {
+              name: 'manageEvents',
+              path: '/manageEvents/',
+              url: 'manageEvents.html'
+            },
+            {
+              name: 'manageActivities',
+              path: '/manageActivities/',
+              url: 'manageActivities.html'
+            },
+            {
+              name: 'departments',
+              path: '/departments/',
+              url: 'departments.html'
+            },
+            {
+              name: 'pms',
+              path: '/pms/',
+              url: 'pms.html'
+            },
+            {
+              name: 'manageTasks',
+              path: '/manageTasks/',
+              url: 'manageTasks.html'
+            },
+            {
+              name: 'manageResources',
+              path: '/manageResources/',
+              url: 'manageResources.html'
+            },
+            {
+              name: 'eventDetails',
+              path: '/eventDetails/',
+              url: 'eventDetails.html'
+            },
+            {
+              name: 'activityDetails',
+              path: '/activityDetails/',
+              url: 'activityDetails.html'
+            },
+          ]
+        });
+
+        var view = app.views.create('.view-main');
+        var router = view.router;
+        router.navigate('/login/');
+
+        var $$ = Dom7;
+        var username = null;
+        var auth = null;
+        var fullname = null;
+        var rights = null;
+
+        //login
+
+        $$(document).on('page:init', '.page[data-name="login"]', function (e) {
+          $$('#loginButton').on('click', function() {
+            var formData = app.form.convertToData('#login-form');
+            var email = formData.email;
+            var password = formData.password;
+            if (isEmptyOrSpaces(email) || isEmptyOrSpaces(password)) {
+              alert("Please fill in your credentials!");
+            } else {
+              var encodedAuth = window.btoa(email + ":" + password);
+              username = email;
+              auth = "Basic " + encodedAuth;
+
+              var xhr = new XMLHttpRequest();
+              xhr.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+                  rights = JSON.parse(xhr.responseText).rights;
+                  //home or changePass
+                  var xhr2 = new XMLHttpRequest();
+                  xhr2.onreadystatechange = function() {
+                    if (this.readyState == 4 && this.status == 200) {
+                      fullname = JSON.parse(xhr2.responseText).fullname;
+                      router.navigate('/home/');
+                    } else if (this.readyState == 4 && this.status == 404) {
+                      router.navigate('/changePass/');
+                    }
+                  };
+                  xhr2.open("GET", "https://localhost:8085/fullname?username=" + username, true);
+                  //xhr.withCredentials = true;
+                  xhr2.setRequestHeader("Authorization", auth);
+                  xhr2.send();
+                } else if (this.readyState == 4 && this.status == 403) {
+                  alert("Incorrect username or password!");
+                }
+              };
+              xhr.open("GET", "https://localhost:8085/auth", true);
+              //xhr.withCredentials = true;
+              xhr.setRequestHeader("Authorization", auth);
+              xhr.send(null);
+            }
+          });
+        });
+
+        //chagePass, setUpProfile, thankYou
+
+        $$(document).on('page:init', '.page[data-name="changePass"]', function (e) {
+          $$('#changePassButton').on('click', function() {
+            var formData = app.form.convertToData('#changePass-form');
+            var password = formData.password;
+            var repeatPassword = formData.repeatPassword;
+            if (isEmptyOrSpaces(password) || isEmptyOrSpaces(repeatPassword)) {
+              alert("Please enter your new password twice!");
+            } else if (password != repeatPassword) {
+              alert("Passwords are not equal!");
+            } else {
+              var xhr = new XMLHttpRequest();
+              xhr.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 204) {
+                  var encodedAuth = window.btoa(username + ":" + password);
+                  auth = "Basic " + encodedAuth;
+                  router.navigate('/setUpProfile/');
+                }
+              };
+              xhr.open("PUT", "https://localhost:8085/password", true);
+              //xhr.withCredentials = true;
+              xhr.setRequestHeader("Authorization", auth);
+              xhr.send(JSON.stringify({"newPassword":password}));
+            }
+          });
+        });
+
+        $$(document).on('page:init', '.page[data-name="setUpProfile"]', function (e) {
+          $$('#setUpProfileButton').on('click', function() {
+              var formData = app.form.convertToData('#setUpProfile-form');
+              var firstName = formData.firstName;
+              var lastName = formData.lastName;
+              var phoneNumber = formData.phoneNumber;
+              if ((isEmptyOrSpaces(firstName) || isEmptyOrSpaces(lastName)) || isEmptyOrSpaces(phoneNumber)) {
+                alert("Please fill in your profile data!");
+              } else {
+                //request to /profile with POST
+                var xhr = new XMLHttpRequest();
+                xhr.onreadystatechange = function() {
+                  if (this.readyState == 4 && this.status == 201) {
+                    router.navigate('/thankYou/');
+                  }
+                };
+                xhr.open("POST", "https://localhost:8085/profile", true);
+                //xhr.withCredentials = true;
+                xhr.setRequestHeader("Authorization", auth);
+                xhr.send(JSON.stringify({"firstName":firstName, "lastName":lastName, "phoneNumber":phoneNumber}));
+              }
+          });
+        });
+
+        $$(document).on('page:init', '.page[data-name="thankYou"]', function (e) {
+          $$('#discoverButton').on('click', function() {
+            router.navigate('/home/');
+          });
+        });
+
+        //home page
+
+        function sortByDate(a, b) {
+            return new Date(a.eventStarts).getTime() - new Date(b.eventStarts).getTime();
+        }
+
+        function sortByDate2(a, b) {
+            return new Date(a.starts).getTime() - new Date(b.starts).getTime();
+        }
+
+        //events lists home
+        var eventsCards = "";
+
+        function createEventsCards(element, index, array) {
+          eventsCards += '<div class="card"><div class="card-content card-content-padding">';
+          eventsCards += '<h3>' + element.eventName + '</h3><br>';
+          //DATE format -> date picker output -- mongo values !!!
+          eventsCards += element.eventStarts + ' - ' + element.eventEnds;
+          eventsCards += '</div><div class="card-footer">';
+          eventsCards += '<button id="' + element.eventId + '" class="col button button-raised button-fill button-round eventDetBtn">Details</button>';
+          eventsCards += '</div></div><br>';
+        }
+
+        var otherEventsCards = "";
+
+        function createOtherEventsCards(element, index, array) {
+          otherEventsCards += '<div class="card"><div class="card-content card-content-padding">';
+          otherEventsCards += '<h3>' + element.name + '</h3><br>';
+          //DATE format -> date picker output -- mongo values !!!
+          otherEventsCards += element.starts + ' - ' + element.ends;
+          otherEventsCards += '</div><div class="card-footer">';
+          otherEventsCards += '<button id="' + element._id + '" class="col button button-raised button-fill button-round otherEventDetBtn">Details</button>';
+          otherEventsCards += '</div></div><br>';
+        }
+
+        /*var menuUser = app.actions.create({
+          buttons: [
+            {
+              text: 'BB Squad',
+              onClick: function () {
+                router.navigate('/bbSquad/');
+              }
+            },
+          ]
+        });
+
+        var menuAdmin = app.actions.create({
+          buttons: [
+            {
+              text: 'BB Squad',
+              onClick: function () {
+                router.navigate('/bbSquad/');
+              }
+            },
+            {
+              text: 'Admin',
+              color: 'red',
+              onClick: function () {
+                router.navigate('/admin/');
+              }
+            },
+          ]
+        });
+
+        $$('#menu').on('click', function () {
+            if (rights == 'Admin') {
+              menuAdmin.open();
+            } else {
+              menuUser.open();
+            }
+        });*/
+        var currentEventId = "";
+
+        function addEvents() {
+          var xhr = new XMLHttpRequest();
+          xhr.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+              var events = JSON.parse(xhr.responseText).events;
+              events.sort(sortByDate);
+              events.forEach(createEventsCards);
+              $$('#contentEvents').html(eventsCards);
+              eventsCards = "";
+
+              $$('.eventDetBtn').on('click', function() {
+                currentEventId = this.id;
+                router.navigate('/eventDetails/');
+              });
+            }
+          };
+          xhr.open("GET", "https://localhost:8086/mainCampaign", true);
+          xhr.setRequestHeader("Authorization", auth);
+          xhr.send(null);
+
+          var xhr2 = new XMLHttpRequest();
+          xhr2.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+              var otherEvents = JSON.parse(xhr2.responseText);
+              otherEvents.sort(sortByDate2);
+              otherEvents.forEach(createOtherEventsCards);
+              $$('#otherEvents').html(otherEventsCards);
+              otherEventsCards = "";
+
+              $$('.otherEventDetBtn').on('click', function() {
+                currentEventId = this.id;
+                router.navigate('/eventDetails/');
+              });
+            }
+          };
+          xhr2.open("GET", "https://localhost:8086/otherEvents", true);
+          xhr2.setRequestHeader("Authorization", auth);
+          xhr2.send(null);
+
+          if (rights == 'Admin') {
+            $$('#adminButton').on('click', function() {
+              router.navigate('/admin/');
+            });
+          } else {
+            $$('#adminButton').css('display', 'none');
+          }
+          /*$$('.eventDetBtn').on('click', function() {
+            currentEventId = this.id;
+            router.navigate('/eventDetails/');
+          });*/
+        }
+
+        $$(document).on('page:init', '.page[data-name="home"]', function (e) {
+          addEvents();
+        });
+
+        $$(document).on('page:reinit', '.page[data-name="home"]', function (e) {
+          addEvents();
+        });
+
+        //eventDetails page
+
+        var pmsList0 = "";
+
+        function createPmsList0(element, index, array) {
+          pmsList0 += '<li id="' + element.fullname + '" ';
+          pmsList0 += 'class="item-content"><div class="item-inner">';
+          pmsList0 += '<div class="item-title">' + element.fullname 
+                    + '</div></div></li>';
+        }
+
+        var departmentsList = "";
+
+        function createDepartmentsList(element, index, array) {
+          departmentsList += '<li id="' + element + '" ';
+          departmentsList += 'class="item-content"><div class="item-inner">';
+          departmentsList += '<div class="item-title">' + element 
+                    + '</div></div></li>';
+        }
+
+        var activitiesCards = "";
+
+        function createActivitiesCards(element, index, array) {
+          activitiesCards += '<div class="card"><div class="card-content card-content-padding">';
+          activitiesCards += '<h3>' + element.activityName + '</h3><br>';
+          activitiesCards += element.activityAbout;
+          activitiesCards += '</div><div class="card-footer">';
+          activitiesCards += '<button id="' + element.activityId + '" class="col button button-raised button-fill button-round activityDetBtn">Details</button>';
+          activitiesCards += '</div></div><br>';
+        }
+
+        var currentActivityId = "";
+        var currentEventName = "";
+        var currentEventDate = "";
+        var currentEventLocation = "";
+
+        function addEventDetails() {
+          var teamMember = false;
+          var xhr = new XMLHttpRequest();
+          xhr.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+              var event = JSON.parse(xhr.responseText);
+              currentEventName = event.name;
+              $$('#eventName').html(event.name);
+              currentEventDate = event.starts + " - " + event.ends;
+              $$('#eventDate').html(currentEventDate);
+              currentEventLocation = event.location;
+              $$('#eventLocation').html(currentEventLocation);
+              var eventTeam = event.eventTeam;
+              if (eventTeam.indexOf(fullname) > -1) {
+                $$('#registerTeamImg').attr('src', 'icons/check.svg');
+                teamMember = true;
+              }
+              $$('#volunteersNr').html(eventTeam.length + " / " + event.volunteersNeeded + " Volunteers");
+              $$('#about').html(event.about);
+              var pms = event.projectManagers;
+              pms.forEach(createPmsList0);
+              $$('#pms').html(pmsList0);
+              var flags = [], departments = [], l = pms.length, i;
+              for (i=0; i<l; i++) {
+                  if (flags[pms[i].departmentPm]) continue;
+                  flags[pms[i].departmentPm] = true;
+                  departments.push(pms[i].departmentPm);
+              }
+              departments.forEach(createDepartmentsList);
+              $$('#eventDepartments').html(departmentsList);
+
+              event.activities.forEach(createActivitiesCards);
+              $$('#activitiesList').html(activitiesCards);
+              pmsList0 = "";
+              departmentsList = "";
+              activitiesCards = "";
+
+              $$('#registerTeamBtn').on('click', function() {
+                if (!teamMember && (eventTeam.length < event.volunteersNeeded)) {
+                  var xhr2 = new XMLHttpRequest();
+                  xhr2.onreadystatechange = function() {
+                    if (this.readyState == 4 && this.status == 205) {
+                      addEventDetails();
+                    }
+                  };
+                  xhr2.open("POST", "https://localhost:8086/teamMember", true);
+                  xhr2.setRequestHeader("Authorization", auth);
+                  xhr2.send(JSON.stringify({"eventId":currentEventId, "fullname":fullname}));
+                }
+              });
+
+              $$('.activityDetBtn').on('click', function() {
+                currentActivityId = this.id;
+                router.navigate('/activityDetails/');
+              });
+            }
+          };
+          xhr.open("GET", "https://localhost:8086/event?id=" + currentEventId, true);
+          xhr.setRequestHeader("Authorization", auth);
+          xhr.send(null);
+
+        }
+
+        $$(document).on('page:init', '.page[data-name="eventDetails"]', function (e) {
+          addEventDetails();
+        });
+
+        $$(document).on('page:reinit', '.page[data-name="eventDetails"]', function (e) {
+          addEventDetails();
+        });
+
+        //activityDetails page
+
+        //-->team tab
+
+        var secondSubmenu = "";
+
+        function createSecondSubmenu() {
+          secondSubmenu += '<div class="row"><div class="col-50 tablet-50"><button id="volunteersOption" class="col button button-small button-outline color-orange">VOLUNTEERS</button></div><div class="col-50 tablet-50"><button id="pmsOption" class="col button button-small button-outline color-orange">PROJECT MANAGERS</button></div></div>';
+        }
+
+        var searchTeam = "";
+
+        function createSearchTeam() {
+          searchTeam += '<form class="searchbar searchbar-inline"><div class="searchbar-inner">';
+          searchTeam += '<div class="searchbar-input-wrap"><input type="search" placeholder="Search">';
+          searchTeam += '<i class="searchbar-icon"></i><span class="input-clear-button"></span></div>';
+          searchTeam += '<span class="searchbar-disable-button if-not-aurora">Cancel</span></div></form>';
+        }
+
+        var teamList = "";
+
+        function createTeamList(element, index, array) {
+          if (currentEventId == element.eventId) {
+            teamList += '<li id="' + element.fullname + '" ';
+            teamList += 'class="item-content"><div class="item-inner">';
+            teamList += '<div class="item-title">' + element.fullname + '</div></div></li>';
+          }
+        }
+
+        var pmsList = "";
+
+        function createPmsList(element, index, array) {
+          pmsList += '<li id="' + element.fullname + '" ';
+          pmsList += 'class="item-content"><div class="item-inner">';
+          pmsList += '<div class="item-title">' + element.fullname 
+                    + '</div></div></li>';
+        }
+
+        function addTeamSubmenu() {
+          var xhr = new XMLHttpRequest();
+          xhr.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+              var event = JSON.parse(xhr.responseText);
+              var pms = event.projectManagers;
+              var team = event.eventTeam;
+              createSecondSubmenu();
+              $$('#secondSubmenu').html(secondSubmenu);
+              secondSubmenu = "";
+
+              $$('#pmsOption').css('border-style', 'none');
+              $$('#volunteersOption').css('border', 'medium solid yellow');
+              $$('#volunteersOption').css('border-radius', '5px');
+              createSearchTeam();
+              var submenuContent = searchTeam;
+              searchTeam = "";
+              submenuContent += '<div class="list searchbar-found"><ul>';
+              team.forEach(createTeamList);
+              submenuContent += teamList;
+              teamList = "";
+              submenuContent += '</ul></div>';
+              $$('#submenuContent').html(submenuContent);
+              
+              $$('#volunteersOption').on('click', function() {
+                $$('#pmsOption').css('border-style', 'none');
+                $$('#volunteersOption').css('border', 'medium solid yellow');
+                $$('#volunteersOption').css('border-radius', '5px');
+                createSearchTeam();
+                var submenuContent = searchTeam;
+                searchTeam = "";
+                submenuContent += '<div class="list searchbar-found"><ul>';
+                team.forEach(createTeamList);
+                submenuContent += teamList;
+                teamList = "";
+                submenuContent += '</ul></div>';
+                $$('#submenuContent').html(submenuContent);
+              });
+
+              $$('#pmsOption').on('click', function() {
+                $$('#volunteersOption').css('border-style', 'none');
+                $$('#pmsOption').css('border', 'medium solid yellow');
+                $$('#pmsOption').css('border-radius', '5px');
+                createSearchTeam();
+                var submenuContent = searchTeam;
+                searchTeam = "";
+                submenuContent += '<div class="list searchbar-found"><ul>';
+                pms.forEach(createPmsList);
+                submenuContent += pmsList;
+                pmsList = "";
+                submenuContent += '</ul></div>';
+                $$('#submenuContent').html(submenuContent);
+              });
+
+              //buttons on member fullname -> user profile ?!
+            }
+          };
+          xhr.open("GET", "https://localhost:8086/event?id=" + currentEventId, true);
+          xhr.setRequestHeader("Authorization", auth);
+          xhr.send(null);
+        }
+
+        //-->tasks tab
+
+        function createSecondSubmenu2() {
+          secondSubmenu += '<div class="row"><div class="col-33 tablet-33"><button id="tasksUnassignedOption" class="col button button-small button-outline color-orange">Unassigned</button></div><div class="col-33 tablet-33"><button id="tasksActiveOption" class="col button button-small button-outline color-orange">Active</button></div><div class="col-33 tablet-33"><button id="tasksCompletedOption" class="col button button-small button-outline color-orange">Completed</button></div></div>';
+        }
+
+        var tasksList = "";
+
+        function createTasksList(element, index, array) {
+          tasksList += '<li id="' + element.taskId + '" ';
+          tasksList += 'class="item-content"><div class="item-inner">';
+          tasksList += '<div class="item-title">' + element.taskName 
+                    + '</div></div></li>';
+        }
+
+        function addTasksSubmenu() {
+          var xhr = new XMLHttpRequest();
+          xhr.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+              var activity = JSON.parse(xhr.responseText);
+              var tasks = activity.tasks;
+              var unassigned = tasks.filter(function (el) {
+                return el.isAssigned == false ;
+              });
+              var active = tasks.filter(function (el) {
+                return el.isAssigned == true &&
+                        el.taskCompletion == false;
+              });
+              var completed = tasks.filter(function (el) {
+                return el.taskCompletion == true;
+              });
+              createSecondSubmenu2();
+              $$('#secondSubmenu').html(secondSubmenu);
+              secondSubmenu = "";
+
+              $$('#tasksActiveOption').css('border-style', 'none');
+              $$('#tasksCompletedOption').css('border-style', 'none');
+              $$('#tasksUnassignedOption').css('border', 'medium solid yellow');
+              $$('#tasksUnassignedOption').css('border-radius', '5px');
+              var submenuContent = '<div class="list"><ul>';
+              unassigned.forEach(createTasksList);
+              submenuContent += tasksList;
+              tasksList = "";
+              submenuContent += '</ul></div>';
+              $$('#submenuContent').html(submenuContent);
+              
+              $$('#tasksUnassignedOption').on('click', function() {
+                $$('#tasksActiveOption').css('border-style', 'none');
+                $$('#tasksCompletedOption').css('border-style', 'none');
+                $$('#tasksUnassignedOption').css('border', 'medium solid yellow');
+                $$('#tasksUnassignedOption').css('border-radius', '5px');
+                var submenuContent = '<div class="list"><ul>';
+                unassigned.forEach(createTasksList);
+                submenuContent += tasksList;
+                tasksList = "";
+                submenuContent += '</ul></div>';
+                $$('#submenuContent').html(submenuContent);
+              });
+
+              $$('#tasksActiveOption').on('click', function() {
+                $$('#tasksUnassignedOption').css('border-style', 'none');
+                $$('#tasksCompletedOption').css('border-style', 'none');
+                $$('#tasksActiveOption').css('border', 'medium solid yellow');
+                $$('#tasksActiveOption').css('border-radius', '5px');
+                var submenuContent = '<div class="list"><ul>';
+                active.forEach(createTasksList);
+                submenuContent += tasksList;
+                tasksList = "";
+                submenuContent += '</ul></div>';
+                $$('#submenuContent').html(submenuContent);
+              });
+
+              $$('#tasksCompletedOption').on('click', function() {
+                $$('#tasksUnassignedOption').css('border-style', 'none');
+                $$('#tasksActiveOption').css('border-style', 'none');
+                $$('#tasksCompletedOption').css('border', 'medium solid yellow');
+                $$('#tasksCompletedOption').css('border-radius', '5px');
+                var submenuContent = '<div class="list"><ul>';
+                completed.forEach(createTasksList);
+                submenuContent += tasksList;
+                tasksList = "";
+                submenuContent += '</ul></div>';
+                $$('#submenuContent').html(submenuContent);
+              });
+            }
+          };
+          xhr.open("GET", "https://localhost:8087/activity?id=" + currentActivityId, true);
+          xhr.setRequestHeader("Authorization", auth);
+          xhr.send(null);
+        }
+
+        //-->resources tab
+
+        function createSecondSubmenu3() {
+          secondSubmenu += '<div class="row"><div class="col-33 tablet-33"><button id="resourcesUnassignedOption" class="col button button-small button-outline color-orange">Unassigned</button></div><div class="col-33 tablet-33"><button id="resourcesActiveOption" class="col button button-small button-outline color-orange">Active</button></div><div class="col-33 tablet-33"><button id="resourcesCompletedOption" class="col button button-small button-outline color-orange">Completed</button></div></div>';
+        }
+
+        var resourcesList = "";
+
+        function createResourcesList(element, index, array) {
+          resourcesList += '<li id="' + element.resourceId + '" ';
+          resourcesList += 'class="item-content"><div class="item-inner">';
+          resourcesList += '<div class="item-title">' + element.resourceName 
+                    + '</div></div></li>';
+        }
+
+        function addResourcesSubmenu() {
+          var xhr = new XMLHttpRequest();
+          xhr.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+              var activity = JSON.parse(xhr.responseText);
+              var resources = activity.resources;
+              var unassigned = resources.filter(function (el) {
+                return el.isAssigned == false ;
+              });
+              var active = resources.filter(function (el) {
+                return el.isAssigned == true &&
+                        el.resourceCompletion == false;
+              });
+              var completed = resources.filter(function (el) {
+                return el.resourceCompletion == true;
+              });
+              createSecondSubmenu3();
+              $$('#secondSubmenu').html(secondSubmenu);
+              secondSubmenu = "";
+
+              $$('#resourcesActiveOption').css('border-style', 'none');
+              $$('#resourcesCompletedOption').css('border-style', 'none');
+              $$('#resourcesUnassignedOption').css('border', 'medium solid yellow');
+              $$('#resourcesUnassignedOption').css('border-radius', '5px');
+              var submenuContent = '<div class="list"><ul>';
+              unassigned.forEach(createResourcesList);
+              submenuContent += resourcesList;
+              resourcesList = "";
+              submenuContent += '</ul></div>';
+              $$('#submenuContent').html(submenuContent);
+              
+              $$('#resourcesUnassignedOption').on('click', function() {
+                $$('#resourcesActiveOption').css('border-style', 'none');
+                $$('#resourcesCompletedOption').css('border-style', 'none');
+                $$('#resourcesUnassignedOption').css('border', 'medium solid yellow');
+                $$('#resourcesUnassignedOption').css('border-radius', '5px');
+                var submenuContent = '<div class="list"><ul>';
+                unassigned.forEach(createResourcesList);
+                submenuContent += resourcesList;
+                resourcesList = "";
+                submenuContent += '</ul></div>';
+                $$('#submenuContent').html(submenuContent);
+              });
+
+              $$('#resourcesActiveOption').on('click', function() {
+                $$('#resourcesUnassignedOption').css('border-style', 'none');
+                $$('#resourcesCompletedOption').css('border-style', 'none');
+                $$('#resourcesActiveOption').css('border', 'medium solid yellow');
+                $$('#resourcesActiveOption').css('border-radius', '5px');
+                var submenuContent = '<div class="list"><ul>';
+                active.forEach(createResourcesList);
+                submenuContent += resourcesList;
+                resourcesList = "";
+                submenuContent += '</ul></div>';
+                $$('#submenuContent').html(submenuContent);
+              });
+
+              $$('#resourcesCompletedOption').on('click', function() {
+                $$('#resourcesUnassignedOption').css('border-style', 'none');
+                $$('#resourcesActiveOption').css('border-style', 'none');
+                $$('#resourcesCompletedOption').css('border', 'medium solid yellow');
+                $$('#resourcesCompletedOption').css('border-radius', '5px');
+                var submenuContent = '<div class="list"><ul>';
+                completed.forEach(createResourcesList);
+                submenuContent += resourcesList;
+                resourcesList = "";
+                submenuContent += '</ul></div>';
+                $$('#submenuContent').html(submenuContent);
+              });
+            }
+          };
+          xhr.open("GET", "https://localhost:8087/activity?id=" + currentActivityId, true);
+          xhr.setRequestHeader("Authorization", auth);
+          xhr.send(null);
+        }
+
+        //activityDetails ---
+
+        $$(document).on('page:init', '.page[data-name="activityDetails"]', function (e) {
+          var xhr = new XMLHttpRequest();
+          xhr.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+              var activity = JSON.parse(xhr.responseText);
+              $$('#eventName').html(currentEventName);
+              $$('#activityName').html(activity.name);
+              $$('#activityDate').html(currentEventDate);
+              $$('#activityLocation').html(currentEventLocation);
+              $$('#about').html(activity.about);
+              
+              $$('#teamBtn').on('click', function() {
+                addTeamSubmenu();
+              });
+
+              $$('#tasksBtn').on('click', function() {
+                addTasksSubmenu();
+              });
+
+              $$('#resourcesBtn').on('click', function() {
+                addResourcesSubmenu();
+              });
+
+              $$('#commentsBtn').on('click', function() {
+                
+              });
+            }
+          };
+          xhr.open("GET", "https://localhost:8087/activity?id=" + currentActivityId, true);
+          xhr.setRequestHeader("Authorization", auth);
+          xhr.send(null);
+        });
+
+        //admin page
+
+        $$(document).on('page:init', '.page[data-name="admin"]', function (e) {
+          $$('#manageUsersButton').on('click', function() {
+            router.navigate('/manageUsers/');
+          });
+
+          $$('#manageCampaignsButton').on('click', function() {
+            router.navigate('/manageCampaigns/');
+          });
+
+          $$('#manageEventsButton').on('click', function() {
+            router.navigate('/manageEvents/');
+          });
+
+          $$('#manageActivitiesButton').on('click', function() {
+            router.navigate('/manageActivities/');
+          });
+        });
+
+        //manageCampaigns
+
+        var selectCampaign = "";
+
+        function createCampaignDropdown(element, index, array) {
+          selectCampaign += '<option class="addedCampaign" value="';
+          selectCampaign += element._id;
+          selectCampaign += '">';
+          selectCampaign += element.name;
+          selectCampaign += '</option>';
+        }
+
+        var campaignsCards = "<h1>Campaigns:</h1>";
+
+        function createCampaignsCards(element, index, array) {
+          campaignsCards += '<div class="card"><div class="card-content card-content-padding">';
+          campaignsCards += '<h3>' + element.name + '</h3><br>';
+          campaignsCards += element.about;
+          campaignsCards += '<br>Departments: ';
+          element.departments.forEach(function(department, index, array) {
+            campaignsCards += department + "| ";
+          });
+          campaignsCards += '</div><div class="card-footer">';
+          campaignsCards += '<button id="' + element._id + '" class="col button button-raised button-fill button-round delCampaignBtn">Delete</button>';
+          campaignsCards += '<button id="' + element._id + '" class="col button button-raised button-fill button-round campaignDepartments">Departments</button>';
+          campaignsCards += '</div></div><br>';
+        }
+
+        function setMainCampaign() {
+          var xhr = new XMLHttpRequest();
+          xhr.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+              $$('#mainCampaignName').html("<h1>Main campaign: " + JSON.parse(xhr.responseText).name + "</h1>");
+            }
+          };
+          xhr.open("GET", "https://localhost:8086/mainCampaign", true);
+          xhr.setRequestHeader("Authorization", auth);
+          xhr.send(null);
+        }
+
+        var currentCampaignId = "";
+
+        function addCampaigns() {
+          var xhr = new XMLHttpRequest();
+          xhr.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+              var campaigns = JSON.parse(xhr.responseText);
+              campaigns.forEach(createCampaignDropdown);
+              $$('.addedCampaign').remove();
+              $$('.setCampaigns').append(selectCampaign);
+              selectCampaign = "";
+              campaigns.forEach(createCampaignsCards);
+              $$('#campaignsList').html(campaignsCards);
+              campaignsCards = "<h1>Campaigns:</h1>";
+              $$('.delCampaignBtn').on('click', function() {
+                var id = this.id;
+                if (!isEmptyOrSpaces(id)) {
+                  var xhr2 = new XMLHttpRequest();
+                  xhr2.onreadystatechange = function() {
+                    if (this.readyState == 4 && this.status == 204) {
+                      addCampaigns();
+                    }
+                  };
+                  xhr2.open("DELETE", "https://localhost:8086/campaign", true);
+                  xhr2.setRequestHeader("Authorization", auth);
+                  xhr2.send(JSON.stringify({"id":id}));
+                }
+              });
+              $$(".campaignDepartments").on('click', function() {
+                currentCampaignId = this.id;
+                router.navigate('/departments/');
+              });
+            }
+          };
+          xhr.open("GET", "https://localhost:8086/campaigns", true);
+          xhr.setRequestHeader("Authorization", auth);
+          xhr.send(null);
+        }
+
+        $$(document).on('page:init', '.page[data-name="manageCampaigns"]', function (e) {
+          setMainCampaign();
+          addCampaigns();
+
+          $$('#addCampaignButton').on('click', function() {
+            var formData = app.form.convertToData('#addCampaign-form');
+            var name = formData.name;
+            var about = formData.about;
+            if (isEmptyOrSpaces(name) || isEmptyOrSpaces(about)) {
+              alert("Please fill in campaign data!");
+            } else {
+              var xhr = new XMLHttpRequest();
+              xhr.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 201) {
+                  addCampaigns();
+                }
+              };
+              xhr.open("POST", "https://localhost:8086/campaign", true);
+              xhr.setRequestHeader("Authorization", auth);
+              xhr.send(JSON.stringify({"name":name, "about":about}));
+            }
+          });
+
+          $$('#setMainCampaignButton').on('click', function() {
+            var smartSelect = app.smartSelect.get('#setMainCampaignSelect');
+            var id = smartSelect.getValue();
+            if (isEmptyOrSpaces(id)) {
+              alert("Please select the main campaign!");
+            } else {
+              var xhr = new XMLHttpRequest();
+              xhr.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 204) {
+                  setMainCampaign();
+                }
+              };
+              xhr.open("PUT", "https://localhost:8086/mainCampaign", true);
+              xhr.setRequestHeader("Authorization", auth);
+              xhr.send(JSON.stringify({"id":id}));
+            }
+          });
+        });
+
+        $$(document).on('page:reinit', '.page[data-name="manageCampaigns"]', function (e) {
+          addCampaigns();
+        });
+
+        //manageDepartments page
+
+        var departmentsCards = "<h1>Departments:</h1>";
+
+        function createDepartmentsCards(element, index, array) {
+          departmentsCards += '<div class="card"><div class="card-content card-content-padding">';
+          departmentsCards += '<h3>' + element + '</h3>';
+          departmentsCards += '</div><div class="card-footer">';
+          departmentsCards += '<button id="' + element + '" class="col button button-raised button-fill button-round delDepartmentBtn">Delete</button>';
+          departmentsCards += '</div></div><br>';
+        }
+
+        function addDepartments() {
+          var xhr = new XMLHttpRequest();
+          xhr.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+              var campaign = JSON.parse(xhr.responseText);
+              $$('#campaignName').html("<h1>" + campaign.name + "</h1>");
+              campaign.departments.forEach(createDepartmentsCards);
+              $$('#departmentsList').html(departmentsCards);
+              departmentsCards = "<h1>Departments:</h1>";
+              $$('.delDepartmentBtn').on('click', function() {
+                var departmentName = this.id;
+                if (!isEmptyOrSpaces(departmentName)) {
+                  var xhr2 = new XMLHttpRequest();
+                  xhr2.onreadystatechange = function() {
+                    if (this.readyState == 4 && this.status == 204) {
+                      addDepartments();
+                    }
+                  };
+                  xhr2.open("DELETE", "https://localhost:8086/department", true);
+                  xhr2.setRequestHeader("Authorization", auth);
+                  xhr2.send(JSON.stringify({"campaignId":currentCampaignId, "department":departmentName}));
+                }
+              });
+            }
+          };
+          xhr.open("GET", "https://localhost:8086/campaign?id=" + currentCampaignId, true);
+          xhr.setRequestHeader("Authorization", auth);
+          xhr.send(null);
+        }
+
+        $$(document).on('page:init', '.page[data-name="departments"]', function (e) {
+          addDepartments();
+
+          $$('#addDepartmentButton').on('click', function() {
+            var id = currentCampaignId;
+            var formData = app.form.convertToData('#addDepartment-form');
+            var department = formData.department;
+            if (isEmptyOrSpaces(id) || isEmptyOrSpaces(department)) {
+              alert("Please write the department!");
+            } else {
+              var xhr = new XMLHttpRequest();
+              xhr.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 204) {
+                  addDepartments();
+                }
+              };
+              xhr.open("POST", "https://localhost:8086/department", true);
+              xhr.setRequestHeader("Authorization", auth);
+              xhr.send(JSON.stringify({"campaignId":id, "department":department}));
+            }
+          });
+        });
+
+        //manageEvents page
+
+        var eventsCardsAdmin = "<h1>Events:</h1>";
+
+        function createEventsCardsAdmin(element, index, array) {
+          eventsCardsAdmin += '<div class="card"><div class="card-content card-content-padding">';
+          eventsCardsAdmin += '<h3>' + element.name + '</h3><br>';
+          eventsCardsAdmin += element.about;
+          if (element.campaign == "") {
+            eventsCardsAdmin += '<br>Independent event<br>';
+          } else {
+            eventsCardsAdmin += '<br>Campaign: ' + element.campaign + '<br>';
+          }
+          eventsCardsAdmin += 'Project managers: ';
+          element.projectManagers.forEach(function(pmJson, index, array) {
+            eventsCardsAdmin += pmJson.fullname + ": " + pmJson.departmentPm + "| ";
+          });
+          eventsCardsAdmin += '</div><div class="card-footer">';
+          eventsCardsAdmin += '<button id="' + element._id + '" value="' + element.campaign + '" class="col button button-raised button-fill button-round delEventBtn">Delete</button>';
+          eventsCardsAdmin += '<button id="' + element._id + '" class="col button button-raised button-fill button-round eventPms">PMs</button>';
+          eventsCardsAdmin += '<button id="' + element._id + '" class="col button button-raised button-fill button-round color-orange eventActivities">Activities</button>';
+          eventsCardsAdmin += '</div></div><br>';
+        }
+
+        var selectCampaign2 = "";
+
+        function createCampaignDropdown2(element, index, array) {
+          selectCampaign2 += '<option class="addedCampaign" value="';
+          selectCampaign2 += element.name;
+          selectCampaign2 += '">';
+          selectCampaign2 += element.name;
+          selectCampaign2 += '</option>';
+        }
+
+        function addEventsAdmin() {
+          var xhr = new XMLHttpRequest();
+          xhr.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+              var campaigns = JSON.parse(xhr.responseText);
+              campaigns.forEach(createCampaignDropdown2);
+              $$('.addedCampaign').remove();
+              $$('.setCampaigns').append(selectCampaign2);
+              selectCampaign2 = "";
+              var xhr2 = new XMLHttpRequest();
+              xhr2.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+                  var events = JSON.parse(xhr2.responseText);
+                  events.forEach(createEventsCardsAdmin);
+                  $$('#eventsList').html(eventsCardsAdmin);
+                  eventsCardsAdmin = "<h1>Events:</h1>";
+                  $$('.delEventBtn').on('click', function() {
+                    var id = this.id;
+                    var campaignName = this.value;
+                    if (!isEmptyOrSpaces(id)) {
+                      var xhr3 = new XMLHttpRequest();
+                      xhr3.onreadystatechange = function() {
+                        if (this.readyState == 4 && this.status == 204) {
+                          addEventsAdmin();
+                        }
+                      };
+                      xhr3.open("DELETE", "https://localhost:8086/event", true);
+                      xhr3.setRequestHeader("Authorization", auth);
+                      xhr3.send(JSON.stringify({"id":id, "campaignName":campaignName}));
+                    }
+                  });
+                  $$(".eventPms").on('click', function() {
+                    currentEventId = this.id;
+                    router.navigate('/pms/');
+                  });
+                  $$(".eventActivities").on('click', function() {
+                    currentEventId = this.id;
+                    router.navigate('/manageActivities/');
+                  });
+                }
+              };
+              xhr2.open("GET", "https://localhost:8086/events", true);
+              xhr2.setRequestHeader("Authorization", auth);
+              xhr2.send(null);
+            }
+          };
+          xhr.open("GET", "https://localhost:8086/campaigns", true);
+          xhr.setRequestHeader("Authorization", auth);
+          xhr.send(null);
+        }
+
+        $$(document).on('page:init', '.page[data-name="manageEvents"]', function (e) {
+          var today = new Date();
+          var pickerInline = app.picker.create({
+            inputEl: '#starts',
+            toolbar: false,
+            rotateEffect: true,
+            mousewheel: true,
+            value: [
+              today.getMonth(),
+              today.getDate(),
+              today.getFullYear(),
+              today.getHours(),
+              today.getMinutes() < 10 ? '0' + today.getMinutes() : today.getMinutes()
+            ],
+            formatValue: function (values, displayValues) {
+              return displayValues[0] + ' ' + values[1] + ', ' + values[2] + ' ' + values[3] + ':' + values[4];
+            },
+            cols: [
+              // Months
+              {
+                values: ('0 1 2 3 4 5 6 7 8 9 10 11').split(' '),
+                displayValues: ('January February March April May June July August September October November December').split(' '),
+                textAlign: 'left'
+              },
+              // Days
+              {
+                values: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31],
+              },
+              // Years
+              {
+                values: (function () {
+                  var arr = [];
+                  for (var i = 1950; i <= 2030; i++) { arr.push(i); }
+                    return arr;
+                })(),
+              },
+              // Space divider
+              {
+                divider: true,
+                content: '&nbsp;&nbsp;'
+              },
+              // Hours
+              {
+                values: (function () {
+                  var arr = [];
+                  for (var i = 0; i <= 23; i++) { arr.push(i); }
+                    return arr;
+                })(),
+              },
+              // Divider
+              {
+                divider: true,
+                content: ':'
+              },
+              // Minutes
+              {
+                values: (function () {
+                  var arr = [];
+                  for (var i = 0; i <= 59; i++) { arr.push(i < 10 ? '0' + i : i); }
+                    return arr;
+                })(),
+              }
+            ],
+            on: {
+              change: function (picker, values, displayValues) {
+                var daysInMonth = new Date(picker.value[2], picker.value[0]*1 + 1, 0).getDate();
+                if (values[1] > daysInMonth) {
+                  picker.cols[1].setValue(daysInMonth);
+                }
+              },
+            }
+          });
+          var pickerInline2 = app.picker.create({
+            inputEl: '#ends',
+            toolbar: false,
+            rotateEffect: true,
+            mousewheel: true,
+            value: [
+              today.getMonth(),
+              today.getDate(),
+              today.getFullYear(),
+              today.getHours(),
+              today.getMinutes() < 10 ? '0' + today.getMinutes() : today.getMinutes()
+            ],
+            formatValue: function (values, displayValues) {
+              return displayValues[0] + ' ' + values[1] + ', ' + values[2] + ' ' + values[3] + ':' + values[4];
+            },
+            cols: [
+              // Months
+              {
+                values: ('0 1 2 3 4 5 6 7 8 9 10 11').split(' '),
+                displayValues: ('January February March April May June July August September October November December').split(' '),
+                textAlign: 'left'
+              },
+              // Days
+              {
+                values: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31],
+              },
+              // Years
+              {
+                values: (function () {
+                  var arr = [];
+                  for (var i = 1950; i <= 2030; i++) { arr.push(i); }
+                    return arr;
+                })(),
+              },
+              // Space divider
+              {
+                divider: true,
+                content: '&nbsp;&nbsp;'
+              },
+              // Hours
+              {
+                values: (function () {
+                  var arr = [];
+                  for (var i = 0; i <= 23; i++) { arr.push(i); }
+                    return arr;
+                })(),
+              },
+              // Divider
+              {
+                divider: true,
+                content: ':'
+              },
+              // Minutes
+              {
+                values: (function () {
+                  var arr = [];
+                  for (var i = 0; i <= 59; i++) { arr.push(i < 10 ? '0' + i : i); }
+                    return arr;
+                })(),
+              }
+            ],
+            on: {
+              change: function (picker, values, displayValues) {
+                var daysInMonth = new Date(picker.value[2], picker.value[0]*1 + 1, 0).getDate();
+                if (values[1] > daysInMonth) {
+                  picker.cols[1].setValue(daysInMonth);
+                }
+              },
+            }
+          });
+
+          addEventsAdmin();
+
+          $$('#addEventButton').on('click', function() {
+            var smartSelect = app.smartSelect.get('#selectEventCampaign');
+            var campaign = smartSelect.getValue();
+
+            var formData = app.form.convertToData('#addEvent-form');
+            var name = formData.name;
+            var about = formData.about;
+            var location = formData.location;
+            var volunteersNeeded = formData.volunteersNeeded;
+            var starts = formData.starts;
+            var ends = formData.ends;
+            /*console.log("Campaign: " + campaign);
+            console.log("Name: " + name);
+            console.log("About: " + about);
+            console.log("Location: " + location);
+            console.log("volunteersNeeded: " + volunteersNeeded);
+            console.log("Starts: " + starts);
+            console.log("Ends: " + ends);
+            console.log(new Date(ends).getTime() - new Date(starts).getTime());*/
+            if ((((((isEmptyOrSpaces(name) || isEmptyOrSpaces(about)) || campaign == null) ||
+                isEmptyOrSpaces(location)) || isEmptyOrSpaces(volunteersNeeded)) || isEmptyOrSpaces(starts)) || isEmptyOrSpaces(ends)) {
+              alert("Please fill in all the fields!");
+            } else {
+              var xhr = new XMLHttpRequest();
+              xhr.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 201) {
+                  addEventsAdmin();
+                }
+              };
+              xhr.open("POST", "https://localhost:8086/event", true);
+              xhr.setRequestHeader("Authorization", auth);
+              xhr.send(JSON.stringify({"name":name, "about":about, "campaign":campaign, "location":location, "starts":starts, "ends":ends, "volunteersNeeded":volunteersNeeded}));
+            }
+          });
+        });
+
+        $$(document).on('page:reinit', '.page[data-name="manageEvents"]', function (e) {
+          addEventsAdmin();
+        });
+
+        //managePms page
+
+        var pmsCards = "<h1>Project managers:</h1>";
+
+        function createPmsCards(element, index, array) {
+          pmsCards += '<div class="card"><div class="card-content card-content-padding">';
+          pmsCards += '<h3>' + element.fullname + '</h3>';
+          pmsCards += '<br>Department: ' + element.departmentPm;
+          pmsCards += '</div><div class="card-footer">';
+          pmsCards += '<button id="' + element.fullname + '" class="col button button-raised button-fill button-round delPmBtn">Delete</button>';
+          pmsCards += '</div></div><br>';
+        }
+
+        function addPms() {
+          var xhr = new XMLHttpRequest();
+          xhr.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+              var event = JSON.parse(xhr.responseText);
+              $$('#eventName').html("<h1>" + event.name + "</h1>");
+              event.projectManagers.forEach(createPmsCards);
+              $$('#pmsList').html(pmsCards);
+              pmsCards = "<h1>Project managers:</h1>";
+              $$('.delPmBtn').on('click', function() {
+                var fullname = this.id;
+                if (!isEmptyOrSpaces(fullname)) {
+                  var xhr2 = new XMLHttpRequest();
+                  xhr2.onreadystatechange = function() {
+                    if (this.readyState == 4 && this.status == 204) {
+                      addPms();
+                    }
+                  };
+                  xhr2.open("DELETE", "https://localhost:8086/pm", true);
+                  xhr2.setRequestHeader("Authorization", auth);
+                  xhr2.send(JSON.stringify({"eventId":currentEventId, "pmName":fullname}));
+                }
+              });
+            }
+          };
+          xhr.open("GET", "https://localhost:8086/event?id=" + currentEventId, true);
+          xhr.setRequestHeader("Authorization", auth);
+          xhr.send(null);
+        }
+
+        $$(document).on('page:init', '.page[data-name="pms"]', function (e) {
+          addPms();
+
+          $$('#addPmButton').on('click', function() {
+            var id = currentEventId;
+            var formData = app.form.convertToData('#addPm-form');
+            var fullname = formData.fullname;
+            var department = formData.department;
+            if ((isEmptyOrSpaces(id) || isEmptyOrSpaces(fullname)) || isEmptyOrSpaces(department)) {
+              alert("Please write the PM fullname and department!");
+            } else {
+              var xhr = new XMLHttpRequest();
+              xhr.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 204) {
+                  addPms();
+                }
+              };
+              xhr.open("POST", "https://localhost:8086/pm", true);
+              xhr.setRequestHeader("Authorization", auth);
+              xhr.send(JSON.stringify({"eventId":id, "pm":{"fullname":fullname, "departmentPm":department}}));
+            }
+          });
+        });
+
+        //manageUsers page
+
+        var usersCards = "<h1>Users:</h1>";
+
+        function createUsersCards(element, index, array) {
+          usersCards += '<div class="card"><div class="card-content card-content-padding">';
+          usersCards += '<h3>' + element.fullname + '</h3>';
+          usersCards += '<br>' + element.username;
+          usersCards += '</div><div class="card-footer">';
+          usersCards += '<button id="' + element.username + '" class="col button button-raised button-fill button-round color-red delUserBtn">Delete</button>';
+          usersCards += '<button id="' + element.username + '" class="col button button-raised button-fill button-round color-blue makeAdminBtn">Make admin</button>';
+          usersCards += '<button id="' + element.fullname + '" class="col button button-raised button-fill button-round color-green addUserDepartmentBtn">Add department</button>';
+          usersCards += '</div></div><br>';
+        }
+
+        function addUsers() {
+          var xhr = new XMLHttpRequest();
+          xhr.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+              var users = JSON.parse(xhr.responseText);
+              users.forEach(createUsersCards);
+              $$('#usersList').html(usersCards);
+              usersCards = "<h1>Users:</h1>";
+              $$('.delUserBtn').on('click', function() {
+                var username = this.id;
+                if (!isEmptyOrSpaces(username)) {
+                  var xhr2 = new XMLHttpRequest();
+                  xhr2.onreadystatechange = function() {
+                    if (this.readyState == 4 && this.status == 204) {
+                      addUsers();
+                    }
+                  };
+                  xhr2.open("DELETE", "https://localhost:8085/user", true);
+                  xhr2.setRequestHeader("Authorization", auth);
+                  xhr2.send(JSON.stringify({"username":username}));
+                }
+              });
+              $$('.makeAdminBtn').on('click', function() {
+                var username = this.id;
+                if (!isEmptyOrSpaces(username)) {
+                  var xhr3 = new XMLHttpRequest();
+                  xhr3.onreadystatechange = function() {
+                    if (this.readyState == 4 && this.status == 204) {
+                      app.dialog.alert("New admin!");
+                    }
+                  };
+                  xhr3.open("POST", "https://localhost:8085/admin", true);
+                  xhr3.setRequestHeader("Authorization", auth);
+                  xhr3.send(JSON.stringify({"username":username}));
+                }
+              });
+              $$('.addUserDepartmentBtn').on('click', function() {
+                var fullname = this.id;
+                app.dialog.prompt('Department name:', function (department) {
+                  if (!isEmptyOrSpaces(fullname) || !isEmptyOrSpaces(department)) {
+                    var xhr4 = new XMLHttpRequest();
+                    xhr4.onreadystatechange = function() {
+                      if (this.readyState == 4 && this.status == 204) {
+                        app.dialog.alert("Department added to user!");
+                      }
+                    };
+                    xhr4.open("POST", "https://localhost:8085/userDepartment", true);
+                    xhr4.setRequestHeader("Authorization", auth);
+                    xhr4.send(JSON.stringify({"fullname":fullname, "department":department}));
+                  }
+                });
+              });
+            }
+          };
+          xhr.open("GET", "https://localhost:8085/users", true);
+          xhr.setRequestHeader("Authorization", auth);
+          xhr.send(null);
+        }
+
+        $$(document).on('page:init', '.page[data-name="manageUsers"]', function (e) {
+          addUsers();
+
+          $$('#addUserButton').on('click', function() {
+            var formData = app.form.convertToData('#addUser-form');
+            var username = formData.username;
+            var password = formData.password;
+            if (isEmptyOrSpaces(username) || isEmptyOrSpaces(password)) {
+              alert("Please complete all the fields!");
+            } else {
+              var xhr = new XMLHttpRequest();
+              xhr.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 201) {
+                  alert("User added! User will appear in the list after it's profile is set up!");
+                  addUsers();
+                }
+              };
+              xhr.open("POST", "https://localhost:8085/user", true);
+              xhr.setRequestHeader("Authorization", auth);
+              xhr.send(JSON.stringify({"username":username, "password":password}));
+            }
+          });
+        });
+
+        //manageActivities page
+
+        var activitiesCardsAdmin = "<h1>Activities:</h1>";
+
+        function createActivitiesCardsAdmin(element, index, array) {
+          activitiesCardsAdmin += '<div class="card"><div class="card-content card-content-padding">';
+          activitiesCardsAdmin += '<h3>' + element.activityName + '</h3>';
+          activitiesCardsAdmin += '<br>' + element.activityAbout;
+          activitiesCardsAdmin += '</div><div class="card-footer">';
+          activitiesCardsAdmin += '<button id="' + element.activityId + '" class="col button button-raised button-fill button-round color-red delActivityBtn">Delete</button>';
+          activitiesCardsAdmin += '<button id="' + element.activityId + '" class="col button button-raised button-fill button-round color-blue manageTasksBtn">Tasks</button>';
+          activitiesCardsAdmin += '<button id="' + element.activityId + '" class="col button button-raised button-fill button-round color-blue manageResourcesBtn">Resources</button>';
+          activitiesCardsAdmin += '</div></div><br>';
+        }
+
+        function addActivities() {
+          var xhr = new XMLHttpRequest();
+          xhr.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+              var event = JSON.parse(xhr.responseText);
+              $$('#eventName').html(event.name);
+              event.activities.forEach(createActivitiesCardsAdmin);
+              $$('#activitiesList').html(activitiesCardsAdmin);
+              activitiesCardsAdmin = "<h1>Activities:</h1>";
+              $$('.delActivityBtn').on('click', function() {
+                var id = this.id;
+                if (!isEmptyOrSpaces(id)) {
+                  var xhr2 = new XMLHttpRequest();
+                  xhr2.onreadystatechange = function() {
+                    if (this.readyState == 4 && this.status == 204) {
+                      addActivities();
+                    }
+                  };
+                  xhr2.open("DELETE", "https://localhost:8087/activity", true);
+                  xhr2.setRequestHeader("Authorization", auth);
+                  xhr2.send(JSON.stringify({"id":id, "eventId":currentEventId}));
+                }
+              });
+              $$('.manageTasksBtn').on('click', function() {
+                currentActivityId = this.id;
+                router.navigate('/manageTasks/');
+              });
+              $$('.manageResourcesBtn').on('click', function() {
+                currentActivityId = this.id;
+                router.navigate('/manageResources/');
+              });
+            }
+          };
+          xhr.open("GET", "https://localhost:8086/event?id=" + currentEventId, true);
+          xhr.setRequestHeader("Authorization", auth);
+          xhr.send(null);
+        }
+
+        $$(document).on('page:init', '.page[data-name="manageActivities"]', function (e) {
+          addActivities();
+
+          $$('#addActivityButton').on('click', function() {
+            var formData = app.form.convertToData('#addActivity-form');
+            var name = formData.name;
+            var about = formData.about;
+            if (isEmptyOrSpaces(name) || isEmptyOrSpaces(about)) {
+              alert("Please complete all the fields!");
+            } else {
+              var xhr = new XMLHttpRequest();
+              xhr.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 201) {
+                  addActivities();
+                }
+              };
+              xhr.open("POST", "https://localhost:8087/activity", true);
+              xhr.setRequestHeader("Authorization", auth);
+              xhr.send(JSON.stringify({"eventId":currentEventId, "name":name, "about":about}));
+            }
+          });
+        });
+
+        //manageTasks page
+
+        var tasksCards = "<h1>Tasks:</h1>";
+
+        function createTasksCards(element, index, array) {
+          tasksCards += '<div class="card"><div class="card-content card-content-padding">';
+          tasksCards += '<h3>' + element.taskName + '</h3>';
+          tasksCards += '</div><div class="card-footer">';
+          tasksCards += '<button id="' + element.taskId + '" class="col button button-raised button-fill button-round color-red delTaskBtn">Delete</button>';
+          tasksCards += '</div></div><br>';
+        }
+
+        function addTasks() {
+          var xhr = new XMLHttpRequest();
+          xhr.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+              var activity = JSON.parse(xhr.responseText);
+              $$('#activityName').html(activity.name);
+              activity.tasks.forEach(createTasksCards);
+              $$('#tasksList').html(tasksCards);
+              tasksCards = "<h1>Tasks:</h1>";
+              $$('.delTaskBtn').on('click', function() {
+                var id = this.id;
+                if (!isEmptyOrSpaces(id)) {
+                  var xhr2 = new XMLHttpRequest();
+                  xhr2.onreadystatechange = function() {
+                    if (this.readyState == 4 && this.status == 204) {
+                      addTasks();
+                    }
+                  };
+                  xhr2.open("DELETE", "https://localhost:8087/task", true);
+                  xhr2.setRequestHeader("Authorization", auth);
+                  xhr2.send(JSON.stringify({"id":id, "activityId":currentActivityId}));
+                }
+              });
+            }
+          };
+          xhr.open("GET", "https://localhost:8087/activity?id=" + currentActivityId, true);
+          xhr.setRequestHeader("Authorization", auth);
+          xhr.send(null);
+        }
+
+        $$(document).on('page:init', '.page[data-name="manageTasks"]', function (e) {
+          var today = new Date();
+          var pickerInline = app.picker.create({
+            inputEl: '#date',
+            toolbar: false,
+            rotateEffect: true,
+            mousewheel: true,
+            value: [
+              today.getMonth(),
+              today.getDate(),
+              today.getFullYear(),
+              today.getHours(),
+              today.getMinutes() < 10 ? '0' + today.getMinutes() : today.getMinutes()
+            ],
+            formatValue: function (values, displayValues) {
+              return displayValues[0] + ' ' + values[1] + ', ' + values[2] + ' ' + values[3] + ':' + values[4];
+            },
+            cols: [
+              // Months
+              {
+                values: ('0 1 2 3 4 5 6 7 8 9 10 11').split(' '),
+                displayValues: ('January February March April May June July August September October November December').split(' '),
+                textAlign: 'left'
+              },
+              // Days
+              {
+                values: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31],
+              },
+              // Years
+              {
+                values: (function () {
+                  var arr = [];
+                  for (var i = 1950; i <= 2030; i++) { arr.push(i); }
+                    return arr;
+                })(),
+              },
+              // Space divider
+              {
+                divider: true,
+                content: '&nbsp;&nbsp;'
+              },
+              // Hours
+              {
+                values: (function () {
+                  var arr = [];
+                  for (var i = 0; i <= 23; i++) { arr.push(i); }
+                    return arr;
+                })(),
+              },
+              // Divider
+              {
+                divider: true,
+                content: ':'
+              },
+              // Minutes
+              {
+                values: (function () {
+                  var arr = [];
+                  for (var i = 0; i <= 59; i++) { arr.push(i < 10 ? '0' + i : i); }
+                    return arr;
+                })(),
+              }
+            ],
+            on: {
+              change: function (picker, values, displayValues) {
+                var daysInMonth = new Date(picker.value[2], picker.value[0]*1 + 1, 0).getDate();
+                if (values[1] > daysInMonth) {
+                  picker.cols[1].setValue(daysInMonth);
+                }
+              },
+            }
+          });
+
+          addTasks();
+
+          $$('#addTaskButton').on('click', function() {
+            var formData = app.form.convertToData('#addTask-form');
+            var name = formData.name;
+            var date = formData.date;
+            var duration = formData.duration;
+            if ((isEmptyOrSpaces(name) || isEmptyOrSpaces(date)) || isEmptyOrSpaces(duration)) {
+              alert("Please complete all the fields!");
+            } else {
+              var xhr = new XMLHttpRequest();
+              xhr.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 201) {
+                  addTasks();
+                }
+              };
+              xhr.open("POST", "https://localhost:8087/task", true);
+              xhr.setRequestHeader("Authorization", auth);
+              xhr.send(JSON.stringify({"activityId":currentActivityId, "name":name, "date":date, "duration":duration}));
+            }
+          });
+        });
+
+        //manageResources page
+
+        var resourcesCards = "<h1>Resources:</h1>";
+
+        function createResourcesCards(element, index, array) {
+          resourcesCards += '<div class="card"><div class="card-content card-content-padding">';
+          resourcesCards += '<h3>' + element.resourceName + '</h3>';
+          resourcesCards += '</div><div class="card-footer">';
+          resourcesCards += '<button id="' + element.resourceId + '" class="col button button-raised button-fill button-round color-red delResourceBtn">Delete</button>';
+          resourcesCards += '</div></div><br>';
+        }
+
+        function addResources() {
+          var xhr = new XMLHttpRequest();
+          xhr.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+              var activity = JSON.parse(xhr.responseText);
+              $$('#activityName').html(activity.name);
+              activity.resources.forEach(createResourcesCards);
+              $$('#resourcesList').html(resourcesCards);
+              resourcesCards = "<h1>Resources:</h1>";
+              $$('.delResourceBtn').on('click', function() {
+                var id = this.id;
+                if (!isEmptyOrSpaces(id)) {
+                  var xhr2 = new XMLHttpRequest();
+                  xhr2.onreadystatechange = function() {
+                    if (this.readyState == 4 && this.status == 204) {
+                      addResources();
+                    }
+                  };
+                  xhr2.open("DELETE", "https://localhost:8087/resource", true);
+                  xhr2.setRequestHeader("Authorization", auth);
+                  xhr2.send(JSON.stringify({"id":id, "activityId":currentActivityId}));
+                }
+              });
+            }
+          };
+          xhr.open("GET", "https://localhost:8087/activity?id=" + currentActivityId, true);
+          xhr.setRequestHeader("Authorization", auth);
+          xhr.send(null);
+        }
+
+        $$(document).on('page:init', '.page[data-name="manageResources"]', function (e) {
+          addResources();
+
+          $$('#addResourceButton').on('click', function() {
+            var formData = app.form.convertToData('#addResource-form');
+            var name = formData.name;
+            var number = formData.number;
+            if (isEmptyOrSpaces(name) || isEmptyOrSpaces(number)) {
+              alert("Please complete all the fields!");
+            } else {
+              var xhr = new XMLHttpRequest();
+              xhr.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 201) {
+                  addResources();
+                }
+              };
+              xhr.open("POST", "https://localhost:8087/resource", true);
+              xhr.setRequestHeader("Authorization", auth);
+              xhr.send(JSON.stringify({"activityId":currentActivityId, "name":name, "number":number}));
+            }
+          });
+        });
+
+        //client part!!! -> without admin stuff
+    </script>
+  </body>
+</html>

@@ -1,0 +1,89 @@
+<div class="page" data-name="manageEvents">
+  <div class="navbar">
+      <div class="navbar-inner">
+          <div class="left">
+            <a href="#" class="link back">
+              <i class="icon icon-back"></i>
+              <span class="if-not-md">Back</span>
+            </a>
+          </div>
+          <div class="title">Manage Events</div>
+          <div class="right"></div>
+      </div>
+  </div>
+  <div class="page-content">
+    <div class="block">
+      <h1>Add a new event:</h1>
+      <div class="list inline-labels no-hairlines-md">
+        <form class="list" id="addEvent-form">
+          <ul>
+            <li class="item-content item-input">
+              <div class="item-inner">
+                <div class="item-input-wrap">
+                  <input name="name" type="text" placeholder="name" required validate>
+                  <span class="input-clear-button"></span>
+                </div>
+              </div>
+            </li>
+            <li class="item-content item-input">
+              <div class="item-inner">
+                <div class="item-input-wrap">
+                  <textarea name="about" placeholder="about" required validate></textarea>
+                  <span class="input-clear-button"></span>
+                </div>
+              </div>
+            </li>
+            <li>
+              <a id="selectEventCampaign" class="item-link smart-select smart-select-init" data-open-in="sheet">
+                <select class="setCampaigns">
+                  <option value="">Independent event</option>
+                </select>
+                <div class="item-content">
+                  <div class="item-inner">
+                    <div class="item-title">Select event campaign</div>
+                  </div>
+                </div>
+              </a>
+            </li>
+            <li class="item-content item-input">
+              <div class="item-inner">
+                <div class="item-input-wrap">
+                  <input name="location" type="text" placeholder="location" required validate>
+                  <span class="input-clear-button"></span>
+                </div>
+              </div>
+            </li>
+            <li class="item-content item-input">
+              <div class="item-inner">
+                <div class="item-input-wrap">
+                  <input name="volunteersNeeded" min="1" type="number" placeholder="volunteersNeeded" required validate>
+                  <span class="input-clear-button"></span>
+                </div>
+              </div>
+            </li>
+            <li class="item-content item-input">
+              <div class="item-inner">
+                <div class="item-input-wrap">
+                  <input id="starts" name="starts" type="text" placeholder="starts" required validate>
+                  <span class="input-clear-button"></span>
+                </div>
+              </div>
+            </li>
+            <li class="item-content item-input">
+              <div class="item-inner">
+                <div class="item-input-wrap">
+                  <input id="ends" name="ends" type="text" placeholder="ends" required validate>
+                  <span class="input-clear-button"></span>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </form>
+      </div>
+      <div class="block block-strong">
+        <a class="button button-large button-round button-fill color-green convert-form-to-data" id="addEventButton" href="#">Create</a>
+      </div>
+    </div>
+    <div id="eventsList" class="block"></div>
+  </div>
+</div>

@@ -1,0 +1,54 @@
+<div class="page" data-name="manageTasks">
+  <div class="navbar">
+      <div class="navbar-inner">
+          <div class="left">
+            <a href="#" class="link back">
+              <i class="icon icon-back"></i>
+              <span class="if-not-md">Back</span>
+            </a>
+          </div>
+          <div class="title">Manage tasks</div>
+          <div class="right"></div>
+      </div>
+  </div>
+  <div class="page-content">
+    <div id="activityName" class="block"></div>
+    <div class="block">
+      <h1>Add a new task:</h1>
+      <div class="list inline-labels no-hairlines-md">
+        <form class="list" id="addTask-form">
+          <ul>
+            <li class="item-content item-input">
+              <div class="item-inner">
+                <div class="item-input-wrap">
+                  <input name="name" type="text" placeholder="name" required validate>
+                  <span class="input-clear-button"></span>
+                </div>
+              </div>
+            </li>
+            <li class="item-content item-input">
+              <div class="item-inner">
+                <div class="item-input-wrap">
+                  <input id="date" name="date" type="text" placeholder="date" required validate>
+                  <span class="input-clear-button"></span>
+                </div>
+              </div>
+            </li>
+            <li class="item-content item-input">
+              <div class="item-inner">
+                <div class="item-input-wrap">
+                  <input name="duration" type="text" placeholder="duration" required validate>
+                  <span class="input-clear-button"></span>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </form>
+      </div>
+      <div class="block block-strong">
+        <a class="button button-large button-round button-fill color-green convert-form-to-data" id="addTaskButton" href="#">Create</a>
+      </div>
+    </div>
+    <div id="tasksList" class="block"></div>
+  </div>
+</div>
