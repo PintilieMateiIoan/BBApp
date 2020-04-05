@@ -62,7 +62,7 @@
   "devDependencies": {
     "@babel/core": "^7.4.3",
     "@babel/plugin-proposal-object-rest-spread": "^7.4.3",
-    "acorn": "^6.1.1",
+    "acorn": "^6.4.1",
     "acorn-jsx": "^5.0.1",
     "autoprefixer": "^9.5.1",
     "clean-css": "^4.2.1",
